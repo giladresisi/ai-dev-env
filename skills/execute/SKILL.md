@@ -921,68 +921,13 @@ TEAM-BASED PARALLEL - Clear frontend/backend separation justifies team execution
 
 ---
 
-## Output Report
+## Step 5: Invoke Post-Execution Subagents
 
-**ONLY generate this report after passing Step 4 Mandatory Verification Gate.**
+**Run this step BEFORE generating the Output Report.**
 
-After execution completes and all validations pass, provide summary:
+**ONLY run after passing the Verification Gate** (Step 4 for sequential, Step 6 for team-based).
 
-### Completed Tasks
-- List all tasks completed with checkmarks
-- Files created/modified with paths
-
-### Test Results
-
-**Tests Created/Updated:**
-- [List test files created]
-- [List test files updated]
-
-**Test Suite Execution:**
-```
-[Show full test suite output]
-```
-
-**Status:** ✅ All tests passing
-
-### Validation Results
-
-**Validation Commands Executed:**
-
-| Level | Command | Status | Output |
-|-------|---------|--------|--------|
-| 1 | [command] | ✅ PASS | [summary] |
-| 2 | [command] | ✅ PASS | [summary] |
-| 3 | [command] | ✅ PASS | [summary] |
-| ... | ... | ... | ... |
-
-**Validation Summary:** ✅ ALL VALIDATIONS PASSED
-
-### Code Quality
-
-- ✅ Code follows project conventions
-- ✅ Documentation added/updated
-- ✅ Types properly defined
-- ✅ Error handling implemented
-
-### Execution Metrics (if team-based)
-- Number of agents used
-- Estimated time saved vs sequential
-- Coordination overhead
-- Task distribution across agents
-
-### Final Status
-
-✅ **EXECUTION COMPLETE** - All implementations, tests, and validations passed successfully.
-
-**Ready for commit:** Yes - all changes verified and production-ready.
-
----
-
-## Invoke Post-Execution Skills
-
-After generating the Output Report above, launch the following skills as **parallel subagents** using the Agent tool. Start all available skills simultaneously — do NOT wait for one to finish before starting the others.
-
-For each skill, check whether it is available in this system. If it is, spawn it as an Agent subagent. If it is not available, skip it silently.
+Spawn all available post-execution skills as parallel subagents using the Agent tool. Start all simultaneously in a single message — do NOT wait for one before starting others. The Output Report cannot be written until their results are in hand.
 
 ---
 
@@ -1033,3 +978,71 @@ Pass the list of files modified during this execution and the plan file path as 
 ---
 
 **Note:** These skills are installed via the marketplace. Do NOT use a bash file-existence check — just attempt to invoke each via the Agent tool and it will fail gracefully if the skill is not installed.
+
+Wait for all subagents to complete, then incorporate their findings into the Output Report sections below.
+
+---
+
+## Output Report
+
+**ONLY generate this report after:**
+- Passing the Verification Gate (Step 4 for sequential, Step 6 for team-based), AND
+- Receiving results from all post-execution subagents above.
+
+After execution completes and all validations pass, provide summary:
+
+### Completed Tasks
+- List all tasks completed with checkmarks
+- Files created/modified with paths
+
+### Test Results
+
+**Tests Created/Updated:**
+- [List test files created]
+- [List test files updated]
+
+**Test Suite Execution:**
+```
+[Show full test suite output]
+```
+
+**Status:** ✅ All tests passing
+
+### Validation Results
+
+**Validation Commands Executed:**
+
+| Level | Command | Status | Output |
+|-------|---------|--------|--------|
+| 1 | [command] | ✅ PASS | [summary] |
+| 2 | [command] | ✅ PASS | [summary] |
+| 3 | [command] | ✅ PASS | [summary] |
+| ... | ... | ... | ... |
+
+**Validation Summary:** ✅ ALL VALIDATIONS PASSED
+
+### Code Quality
+
+- ✅ Code follows project conventions
+- ✅ Documentation added/updated
+- ✅ Types properly defined
+- ✅ Error handling implemented
+
+### Execution Metrics (if team-based)
+- Number of agents used
+- Estimated time saved vs sequential
+- Coordination overhead
+- Task distribution across agents
+
+### Code Review
+[Paste verdict and key findings from the code-review subagent]
+
+### Acceptance Criteria Validation
+[Paste ACCEPTED / REJECTED / NEEDS REVIEW verdict and per-criterion results from the acceptance-criteria-validate subagent]
+
+### Execution Report Summary
+[Paste coverage gaps and key findings from the execution-report subagent]
+
+### Final Status
+
+✅ **EXECUTION COMPLETE**
