@@ -927,11 +927,17 @@ TEAM-BASED PARALLEL - Clear frontend/backend separation justifies team execution
 
 **ONLY run after passing the Verification Gate** (Step 4 for sequential, Step 6 for team-based).
 
-Spawn all available post-execution skills as parallel subagents using the Agent tool. Start all simultaneously in a single message — do NOT wait for one before starting others. The Output Report cannot be written until their results are in hand.
+**All 3 subagents are mandatory — none can be skipped.**
+
+Spawn all 3 as **foreground** parallel subagents using the Agent tool (do NOT set `run_in_background: true`). Start all simultaneously in a single message — do NOT wait for one before starting others. The Output Report cannot be written until their results are in hand.
+
+**Required Agent tool parameters for every subagent:**
+- `subagent_type: "general-purpose"` — always use this, never a named skill type
+- The prompt must begin with: `"Use the Skill tool to invoke ai-dev-env:<skill-name> …"` — this ensures the skill is actually invoked inside the agent
 
 ---
 
-### Subagent 1 — Execution Report (always run if available)
+### Subagent 1 — Execution Report (mandatory)
 
 **Skill:** `execution-report`
 
@@ -959,7 +965,7 @@ Use this to populate the "Test Results" and "Validation Results" sections of the
 
 ---
 
-### Subagent 2 — Acceptance Criteria Validation (run if available)
+### Subagent 2 — Acceptance Criteria Validation (mandatory)
 
 **Skill:** `acceptance-criteria-validate`
 
@@ -969,7 +975,7 @@ Pass the plan file path and the execution output summary as context. The skill w
 
 ---
 
-### Subagent 3 — Code Review (run if available)
+### Subagent 3 — Code Review (mandatory)
 
 **Skill:** `code-review`
 
@@ -977,7 +983,7 @@ Pass the list of files modified during this execution and the plan file path as 
 
 ---
 
-**Note:** These skills are installed via the marketplace. Do NOT use a bash file-existence check — just attempt to invoke each via the Agent tool and it will fail gracefully if the skill is not installed.
+**Note:** These skills are installed via the marketplace. Do NOT use a bash file-existence check — just invoke each via the Agent tool as described above.
 
 Wait for all subagents to complete, then incorporate their findings into the Output Report sections below.
 
