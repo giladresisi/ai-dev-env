@@ -5,11 +5,20 @@ description: Use when creating a git worktree for feature isolation with automat
 
 # Create Worktree with Environment Setup
 
-When this command is invoked with `/create-worktree <branch-name> [base-branch]`, execute the following steps:
+When this command is invoked with `/create-worktree <branch-name> [base-branch] [path=<folder>]`, execute the following steps:
 
 ## Step 1: Parse Arguments
 
-Extract the branch name and optional base branch from the command arguments.
+Extract the branch name, optional base branch, and optional path override from the command arguments.
+
+Derive the **worktree folder name**:
+- If an explicit `path=<folder>` argument was provided, use that.
+- Otherwise, use the **last segment** of the branch name (the part after the final `/`).
+  - `autoresearch/multisector-mar22` → `multisector-mar22`
+  - `feature/auth` → `auth`
+  - `feature-auth` → `feature-auth` (no slash, use as-is)
+
+The worktree will be created at `../{folder}`. The git branch is still created as `{branch-name}` (preserving the full hierarchical name).
 
 ## Step 2: Create Git Worktree
 
@@ -17,18 +26,18 @@ Execute the git worktree add command:
 
 ```bash
 # If base-branch provided:
-git worktree add ../{branch-name} -b {branch-name} {base-branch}
+git worktree add ../{folder} -b {branch-name} {base-branch}
 
 # If no base-branch provided:
-git worktree add ../{branch-name} -b {branch-name}
+git worktree add ../{folder} -b {branch-name}
 ```
 
-The worktree will be created in the parent directory at `../{branch-name}`.
+The worktree will be created in the parent directory at `../{folder}`.
 
 ## Step 3: Identify Source and Target Paths
 
 - **Source:** Current working directory (the original repo)
-- **Target:** `../{branch-name}` (the new worktree)
+- **Target:** `../{folder}` (the new worktree)
 
 ## Step 4: Copy .env Files
 
@@ -45,9 +54,9 @@ For each location, use `test -f` to check if the file exists, then copy it:
 # Check and copy .env files
 for env_file in .env backend/.env frontend/.env backend/.env.local frontend/.env.local; do
   if [ -f "$env_file" ]; then
-    target_dir=$(dirname "../{branch-name}/$env_file")
+    target_dir=$(dirname "../{folder}/$env_file")
     mkdir -p "$target_dir"
-    cp "$env_file" "../{branch-name}/$env_file"
+    cp "$env_file" "../{folder}/$env_file"
     echo "Copied $env_file"
   fi
 done
@@ -68,7 +77,7 @@ Check which Python package manager the project uses, then install dependencies i
 
 ```bash
 # uv projects — run in the worktree backend directory
-cd ../{branch-name}/backend
+cd ../{folder}/backend
 uv sync
 ```
 
@@ -77,13 +86,13 @@ uv sync
 
 ```bash
 # Copy venv (all platforms)
-cp -r backend/venv ../{branch-name}/backend/venv
+cp -r backend/venv ../{folder}/backend/venv
 
 # Install dependencies
 # Windows
-cd ..\{branch-name}\backend && venv\Scripts\python -m pip install -r requirements.txt
+cd ..\{folder}\backend && venv\Scripts\python -m pip install -r requirements.txt
 # Unix/Mac
-cd ../{branch-name}/backend && venv/bin/python -m pip install -r requirements.txt
+cd ../{folder}/backend && venv/bin/python -m pip install -r requirements.txt
 ```
 
 Check both top-level and `backend/` for `pyproject.toml`/`uv.lock` or `requirements.txt`.
@@ -101,11 +110,11 @@ For each package.json found:
 
 ```bash
 # Windows
-cd ..\{branch-name}\frontend
+cd ..\{folder}\frontend
 npm install
 
 # Unix/Mac
-cd ../{branch-name}/frontend
+cd ../{folder}/frontend
 npm install
 ```
 
@@ -114,7 +123,7 @@ npm install
 ## Step 8: Report Completion
 
 Provide a summary to the user:
-- Worktree created at: `../{branch-name}`
+- Worktree created at: `../{folder}`
 - .env files copied: [list]
 - Python dependencies installed in: [list] (method: uv sync / pip install)
 - npm dependencies installed in: [list]
@@ -141,7 +150,7 @@ Use appropriate commands (copy vs cp, robocopy vs cp -r, Scripts vs bin) based o
 
 User runs: `/create-worktree feature-auth main`
 
-Expected output:
+Expected output (branch has no `/`, so folder = branch name):
 ```
 Creating worktree 'feature-auth' based on 'main'...
 ✓ Worktree created at ../feature-auth
@@ -158,4 +167,15 @@ Installing npm dependencies...
 ✓ Installed backend/package.json (43 packages)
 
 Worktree setup complete! You can now work in ../feature-auth
+```
+
+User runs: `/create-worktree autoresearch/multisector-mar22 master`
+
+Expected output (last segment of branch name used as folder):
+```
+Creating worktree 'autoresearch/multisector-mar22' based on 'master'...
+✓ Worktree created at ../multisector-mar22
+  (branch: autoresearch/multisector-mar22, folder: multisector-mar22)
+...
+Worktree setup complete! You can now work in ../multisector-mar22
 ```
