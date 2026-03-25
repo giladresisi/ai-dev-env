@@ -332,7 +332,20 @@ For EACH task in "Step by Step Tasks":
 - Include proper type hints and documentation
 - Add structured logging where appropriate
 
-#### b.5. Add Concise Code Remarks
+#### b.5. Python Performance Check (if skill available)
+
+**After writing or editing any Python file:**
+
+Check whether the `python-performance-optimization` skill is listed in your available skills. If it is, invoke it on the modified function(s):
+
+```
+skill: "python-performance-optimization"
+args: "<function name(s)> in <file path>"
+```
+
+Apply any recommendations before moving to the next task. If the skill is not available, skip this step silently — do not mention it.
+
+#### b.6. Add Concise Code Remarks
 
 **REQUIRED as part of every implementation task:**
 
@@ -655,7 +668,11 @@ Each spawned agent MUST follow these commenting rules when implementing their ta
 - **Inline remarks** above non-obvious logic: explain the *why* (not the *what*) for algorithms, workarounds, critical business decisions, and async/concurrency patterns.
 - Keep all comments short (1–3 lines). Skip comments for self-explanatory code.
 
-Include this requirement explicitly in the prompt given to each spawned agent.
+**Python Performance Check — required for all agents when editing Python:**
+
+After writing or editing any Python file, each agent must check whether the `python-performance-optimization` skill is available in their context. If it is, invoke it on the modified function(s) and apply any recommendations before marking the task done. If the skill is not available, skip silently.
+
+Include both requirements explicitly in the prompt given to each spawned agent.
 
 ### 4. MANDATORY: Integration & Testing Verification
 
