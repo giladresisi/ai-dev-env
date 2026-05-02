@@ -41,31 +41,24 @@ The worktree will be created in the parent directory at `../{folder}`.
 
 ## Step 4: Copy .env Files
 
-Use Bash to check for and copy .env files (gitignored files are not found by Glob):
-
-Check common .env file locations explicitly:
-- Top-level: `.env`
-- Frontend: `frontend/.env`, `frontend/.env.local`
-- Backend: `backend/.env`, `backend/.env.local`
-
-For each location, use `test -f` to check if the file exists, then copy it:
+Use Bash to find and copy all .env files. Because .env files are gitignored, Glob cannot see them — use `find` to discover them recursively:
 
 ```bash
-# Check and copy .env files
-for env_file in .env backend/.env frontend/.env backend/.env.local frontend/.env.local; do
-  if [ -f "$env_file" ]; then
-    target_dir=$(dirname "../{folder}/$env_file")
-    mkdir -p "$target_dir"
-    cp "$env_file" "../{folder}/$env_file"
-    echo "Copied $env_file"
-  fi
+# Find and copy all .env* files, excluding tooling directories
+find . -maxdepth 6 \( -name ".env" -o -name ".env.local" -o -name ".env.*" \) \
+  ! -path "*/.venv/*" ! -path "*/node_modules/*" ! -path "*/.git/*" | while read env_file; do
+  env_file="${env_file#./}"
+  target_dir=$(dirname "../{folder}/$env_file")
+  mkdir -p "$target_dir"
+  cp "$env_file" "../{folder}/$env_file"
+  echo "Copied $env_file"
 done
 ```
 
 This approach:
-1. Checks each known .env location explicitly with `test -f`
-2. Creates target directory if needed with `mkdir -p`
-3. Copies only files that exist
+1. Discovers all `.env`, `.env.local`, and `.env.*` files at any depth (up to 6 levels)
+2. Excludes `.venv`, `node_modules`, and `.git` directories
+3. Creates target subdirectories as needed with `mkdir -p`
 4. Works with gitignored files that Glob cannot see
 
 ## Step 5: Install Python Dependencies
