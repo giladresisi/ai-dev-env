@@ -674,6 +674,21 @@ After writing or editing any Python file, each agent must check whether the `pyt
 
 Include both requirements explicitly in the prompt given to each spawned agent.
 
+**⚠️ Resource-Safety Rule for Parallel Test Commands**
+
+When assigning validation/test commands to agents running in parallel, distinguish between two categories:
+
+- **Targeted runs** — test a specific file with a `-k` filter or explicit file path.
+  Safe to run in parallel: `pytest tests/test_foo.py -k "my_feature"`
+- **Full-suite runs** — `pytest tests/` or `npm test` with no file filter.
+  **NEVER assign these to a parallel agent.** Each such process loads the entire test
+  dependency tree simultaneously; N agents = N × full Python/Node runtimes in memory,
+  which spikes RAM and CPU proportionally and can stall or OOM the machine.
+
+**Rule:** Each parallel agent runs only its own targeted test command (its feature slice).
+The full-suite regression command is run **once, sequentially, by the orchestrator** in
+Step 5 (Run Validation Commands) — after all agents have completed and been shut down.
+
 ### 4. MANDATORY: Integration & Testing Verification
 
 **REQUIRED BEFORE PROCEEDING:**
@@ -894,12 +909,16 @@ If plan contains "Parallel Execution Strategy" section with 3 agents defined, yo
 - ✅ Plan explicitly defines parallel execution strategy
 - ✅ 4+ tasks with clear domain separation
 - ✅ Frontend and backend work can proceed independently
-- ✅ Multiple long-running test suites can run concurrently
+- ✅ Multiple *targeted* test files can run concurrently (e.g. `pytest tests/test_a.py`, `pytest tests/test_b.py`)
 
 **Use sequential execution when:**
 - ✅ 1-3 simple, fast tasks
 - ✅ Tasks have tight sequential dependencies
 - ✅ All work affects the same files (high conflict risk)
+
+**Never parallelise full-suite commands:**
+- ❌ `pytest tests/` with no file filter — always run sequentially in the orchestrator's Step 5 only
+- ❌ `npm test` / `cargo test` / any command that loads the entire test tree — same rule
 
 ---
 
