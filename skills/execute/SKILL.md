@@ -270,7 +270,9 @@ For simple plans (1-3 independent tasks, no parallel execution strategy):
 
 Run the full test suite once on the unmodified codebase and record the results:
 
-1. Run: `[project test command]` (e.g., `uv run pytest tests/ -v` or `npm test`)
+1. Run: `[project test command]` (e.g., `uv run pytest tests/ -v` or `npm test`) — on
+   full-suite runs, **exclude live external-connection tests by default** (see
+   "External-Connection Test Safety" below); include them only if the plan explicitly opts in.
 2. Record: N passing, N failing, N skipped
 3. Note the names of any failing tests — these are **pre-existing failures**
 
@@ -688,6 +690,24 @@ When assigning validation/test commands to agents running in parallel, distingui
 **Rule:** Each parallel agent runs only its own targeted test command (its feature slice).
 The full-suite regression command is run **once, sequentially, by the orchestrator** in
 Step 5 (Run Validation Commands) — after all agents have completed and been shut down.
+
+**⚠️ External-Connection Test Safety (full-suite runs default-skip live-connection tests)**
+
+Full-suite runs — both the **baseline** (Step 1.25) and the **final validation** — MUST
+**exclude tests that open live external connections by default** (broker / IB / market-data /
+live network services / anything that dials a real endpoint). Rationale: on shared or
+multi-worktree machines these tests open *real* connections that can disrupt a live process —
+e.g. a running trading orchestrator's broker/IB feed — and frequently hang.
+
+- **Default:** deselect external-connection tests via the project's mechanism — a marker
+  (`pytest tests/ -m "not ib and not external"`), or `--ignore` / `--deselect` of the known
+  external-connection test paths (e.g. `pytest tests/ --ignore=tests/test_ib_realtime.py`).
+  If the project has no marker yet, exclude by path and note it.
+- **Opt-in only:** run external-connection tests **only** when the implementation plan's md
+  explicitly requests it (its VALIDATION COMMANDS "external-connection tests" directive says
+  *Yes* and lists the exact paths/markers) **and** you have confirmed no live external process
+  (e.g. a trading orchestrator) is running on the machine.
+- This is independent of the resource-safety rule above and applies even to sequential runs.
 
 ### 4. MANDATORY: Integration & Testing Verification
 

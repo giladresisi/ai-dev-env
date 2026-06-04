@@ -328,6 +328,18 @@ Valid reasons: physical hardware (camera, mic, Bluetooth), legal/compliance acti
 
 ## VALIDATION COMMANDS
 
+### External-connection test policy (full-suite runs)
+
+Full-suite runs (baseline + final validation) **exclude tests that open live external
+connections** (broker / IB / market-data / live network services) **by default** — on shared
+or multi-worktree machines they open real connections that can disrupt a live process (e.g. a
+running trading orchestrator) and may hang. The execute skill deselects them unless this plan
+opts in here.
+
+- **Run external-connection tests during validation?** ☐ No (default) ☐ Yes
+- **Deselect command (default-skip):** `[e.g. pytest tests/ -m "not ib and not external"  OR  pytest tests/ --ignore=tests/test_ib_realtime.py]`
+- **If Yes — exact paths/markers + safe command:** `[e.g. pytest -m ib]` and confirm **no live external process (e.g. trading orchestrator) is running** during the run.
+
 ### Level 0: External Service Validation (if applicable — MUST PASS FIRST)
 
 ```bash

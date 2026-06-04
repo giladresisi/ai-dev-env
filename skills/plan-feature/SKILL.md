@@ -116,6 +116,8 @@ Run automatically after plan is written. No user input needed unless a gap can't
 4. **Fill gaps** — add automated test by default; if genuinely impossible to automate, add manual test with one-sentence justification ("requires physical hardware", "CAPTCHA blocks automation"). "Hard to automate" and "requires a browser" are NOT valid reasons — use Playwright.
 5. **Re-verify** — repeat until all paths are ✅ or documented manual-only. Update Test Automation Summary in plan.
 
+**External-connection test policy** — set the plan's VALIDATION COMMANDS "external-connection test policy" directive. Full-suite runs (baseline + validation) SKIP tests that open live external connections (broker/IB/market-data/live network) **by default**, because on shared/multi-worktree machines they open real connections that can disrupt a live process (e.g. a trading orchestrator) and hang. Always provide the default-skip *deselect* command; only opt these tests in (with exact paths/markers) when genuinely required **and** no live external process is running.
+
 6. **Script deliverables check** — if the plan introduces or modifies a runnable script (demo runner, CLI, orchestrator), verify the plan includes ALL of the following criteria (distinct from scenario-logic criteria):
    - "Running `<script>` completes the setup phase without raising an exception." (runnability — unit tests do not substitute for this)
    - "All user-visible output uses ASCII-safe characters, or the script explicitly reconfigures stdout encoding at startup." (cross-platform compatibility)
@@ -141,6 +143,7 @@ wc -l .agents/plans/[feature-name].md
 - [ ] Every test marked ✅/⚠️ with tool, file path, and run command
 - [ ] Manual tests have automation-impossibility justification
 - [ ] Test Automation Summary updated after gap-filling
+- [ ] External-connection test policy set in VALIDATION COMMANDS (default-skip; opt-in only if justified + no live external process)
 
 ---
 
