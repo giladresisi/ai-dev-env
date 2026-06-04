@@ -328,17 +328,21 @@ Valid reasons: physical hardware (camera, mic, Bluetooth), legal/compliance acti
 
 ## VALIDATION COMMANDS
 
-### External-connection test policy (full-suite runs)
+### Side-effecting test policy (full-suite runs)
 
-Full-suite runs (baseline + final validation) **exclude tests that open live external
-connections** (broker / IB / market-data / live network services) **by default** — on shared
-or multi-worktree machines they open real connections that can disrupt a live process (e.g. a
-running trading orchestrator) and may hang. The execute skill deselects them unless this plan
-opts in here.
+Full-suite runs (baseline + final validation) **exclude tests with machine-wide side effects**
+**by default** — on shared or multi-worktree machines they reach outside the test process and can
+disrupt or kill a live process. Two categories: (1) **live external connections** (broker / IB /
+market-data / live network) — open real connections that disrupt a live process and may hang;
+(2) **process-lifecycle / machine-wide process management** — tests that start/stop/kill OS
+processes (orchestrators, daemons, supervisors) or run a machine-wide process scan/`terminate`,
+which can kill a *live* process in another worktree (e.g. a test calling an orchestrator's
+`run()`/startup that `terminate()`s every matching process). The execute skill deselects both
+unless this plan opts in here.
 
-- **Run external-connection tests during validation?** ☐ No (default) ☐ Yes
-- **Deselect command (default-skip):** `[e.g. pytest tests/ -m "not ib and not external"  OR  pytest tests/ --ignore=tests/test_ib_realtime.py]`
-- **If Yes — exact paths/markers + safe command:** `[e.g. pytest -m ib]` and confirm **no live external process (e.g. trading orchestrator) is running** during the run.
+- **Run side-effecting tests during validation?** ☐ No (default) ☐ Yes
+- **Deselect command (default-skip):** `[e.g. pytest tests/ -m "not ib and not external and not lifecycle"  OR  pytest tests/ --ignore=tests/test_ib_realtime.py --ignore=tests/test_orchestrator_main.py]`
+- **If Yes — exact paths/markers + safe command:** `[e.g. pytest -m ib]` and confirm **no live instance of the affected resource/process (e.g. a trading orchestrator or its broker/IB feed) is running** during the run.
 
 ### Level 0: External Service Validation (if applicable — MUST PASS FIRST)
 

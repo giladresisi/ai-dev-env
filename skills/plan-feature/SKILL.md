@@ -116,7 +116,7 @@ Run automatically after plan is written. No user input needed unless a gap can't
 4. **Fill gaps** — add automated test by default; if genuinely impossible to automate, add manual test with one-sentence justification ("requires physical hardware", "CAPTCHA blocks automation"). "Hard to automate" and "requires a browser" are NOT valid reasons — use Playwright.
 5. **Re-verify** — repeat until all paths are ✅ or documented manual-only. Update Test Automation Summary in plan.
 
-**External-connection test policy** — set the plan's VALIDATION COMMANDS "external-connection test policy" directive. Full-suite runs (baseline + validation) SKIP tests that open live external connections (broker/IB/market-data/live network) **by default**, because on shared/multi-worktree machines they open real connections that can disrupt a live process (e.g. a trading orchestrator) and hang. Always provide the default-skip *deselect* command; only opt these tests in (with exact paths/markers) when genuinely required **and** no live external process is running.
+**Side-effecting test policy** — set the plan's VALIDATION COMMANDS "side-effecting test policy" directive. Full-suite runs (baseline + validation) SKIP tests with machine-wide side effects **by default**, in two categories: (1) **live external connections** (broker/IB/market-data/live network) — open real connections that disrupt a live process and hang; and (2) **process-lifecycle / machine-wide process management** — tests that start/stop/kill OS processes (orchestrators, daemons, supervisors) or run a machine-wide process scan/`terminate`, which can kill a *live* process in another worktree (e.g. a test calling an orchestrator's `run()`/startup that terminates every matching process). Always provide the default-skip *deselect* command; only opt these tests in (with exact paths/markers) when genuinely required **and** no live instance of the affected resource/process is running. (Also: such tests should patch/mock their kill path — flag it if they don't.)
 
 6. **Script deliverables check** — if the plan introduces or modifies a runnable script (demo runner, CLI, orchestrator), verify the plan includes ALL of the following criteria (distinct from scenario-logic criteria):
    - "Running `<script>` completes the setup phase without raising an exception." (runnability — unit tests do not substitute for this)
@@ -143,7 +143,7 @@ wc -l .agents/plans/[feature-name].md
 - [ ] Every test marked ✅/⚠️ with tool, file path, and run command
 - [ ] Manual tests have automation-impossibility justification
 - [ ] Test Automation Summary updated after gap-filling
-- [ ] External-connection test policy set in VALIDATION COMMANDS (default-skip; opt-in only if justified + no live external process)
+- [ ] Side-effecting test policy set in VALIDATION COMMANDS (default-skip live-connection AND process-lifecycle/machine-wide-kill tests; opt-in only if justified + no live instance running)
 
 ---
 

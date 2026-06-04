@@ -271,8 +271,9 @@ For simple plans (1-3 independent tasks, no parallel execution strategy):
 Run the full test suite once on the unmodified codebase and record the results:
 
 1. Run: `[project test command]` (e.g., `uv run pytest tests/ -v` or `npm test`) — on
-   full-suite runs, **exclude live external-connection tests by default** (see
-   "External-Connection Test Safety" below); include them only if the plan explicitly opts in.
+   full-suite runs, **exclude side-effecting tests by default** (live external connections AND
+   process-lifecycle/machine-wide-kill tests; see "Side-Effecting Test Safety" below); include
+   them only if the plan explicitly opts in.
 2. Record: N passing, N failing, N skipped
 3. Note the names of any failing tests — these are **pre-existing failures**
 
@@ -691,22 +692,32 @@ When assigning validation/test commands to agents running in parallel, distingui
 The full-suite regression command is run **once, sequentially, by the orchestrator** in
 Step 5 (Run Validation Commands) — after all agents have completed and been shut down.
 
-**⚠️ External-Connection Test Safety (full-suite runs default-skip live-connection tests)**
+**⚠️ Side-Effecting Test Safety (full-suite runs default-skip tests with machine-wide side effects)**
 
 Full-suite runs — both the **baseline** (Step 1.25) and the **final validation** — MUST
-**exclude tests that open live external connections by default** (broker / IB / market-data /
-live network services / anything that dials a real endpoint). Rationale: on shared or
-multi-worktree machines these tests open *real* connections that can disrupt a live process —
-e.g. a running trading orchestrator's broker/IB feed — and frequently hang.
+**exclude tests with live, machine-wide side effects by default**. On shared or multi-worktree
+machines these tests reach *outside* the test process and can disrupt or kill a live process.
+Two categories:
 
-- **Default:** deselect external-connection tests via the project's mechanism — a marker
-  (`pytest tests/ -m "not ib and not external"`), or `--ignore` / `--deselect` of the known
-  external-connection test paths (e.g. `pytest tests/ --ignore=tests/test_ib_realtime.py`).
+1. **Live external connections** — broker / IB / market-data / live network services / anything
+   that dials a real endpoint. These open *real* connections that can disrupt a live process
+   (e.g. a running trading orchestrator's broker/IB feed) and frequently hang.
+2. **Process-lifecycle / machine-wide process management** — tests that **start, stop, or kill
+   OS processes** (orchestrators, daemons, supervisors) or that exercise a **machine-wide process
+   scan/`terminate`** path. These can terminate a *live* process across the whole machine, not
+   just their own worktree. Classic trap: a test that calls an orchestrator's `run()`/startup path
+   which scans for and `terminate()`s every matching process — running it in *any* worktree kills
+   a live orchestrator running in *another* (no traceback/WER; the victim's parent dies and its
+   child is orphaned). Such a test is unsafe unless it patches/mocks the kill path.
+
+- **Default:** deselect both categories via the project's mechanism — a marker
+  (`pytest tests/ -m "not ib and not external and not lifecycle"`), or `--ignore` / `--deselect`
+  of the known paths (e.g. `pytest tests/ --ignore=tests/test_ib_realtime.py --ignore=tests/test_orchestrator_main.py`).
   If the project has no marker yet, exclude by path and note it.
-- **Opt-in only:** run external-connection tests **only** when the implementation plan's md
-  explicitly requests it (its VALIDATION COMMANDS "external-connection tests" directive says
-  *Yes* and lists the exact paths/markers) **and** you have confirmed no live external process
-  (e.g. a trading orchestrator) is running on the machine.
+- **Opt-in only:** run them **only** when the implementation plan's md explicitly requests it
+  (its VALIDATION COMMANDS "side-effecting test policy" directive lists the exact paths/markers)
+  **and** you have confirmed no live instance of the affected resource/process (e.g. a trading
+  orchestrator, or its broker/IB feed) is running anywhere on the machine.
 - This is independent of the resource-safety rule above and applies even to sequential runs.
 
 ### 4. MANDATORY: Integration & Testing Verification
