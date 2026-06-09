@@ -103,8 +103,12 @@ The worktree lands at `../<tag>`.
 
 ## Step 3.5: Copy Cached Data
 
-After the worktree is created, copy any cached data files so the new worktree can
-use them without re-downloading or re-computing.
+After the worktree is created, copy any cached regression data so the new worktree
+can use it without re-downloading or re-computing.
+
+> **Note:** The main `data/*.parquet` bar files are NOT copied. They live in the
+> shared global path (`~/projects/auto-co-trader/global/...`) and all worktrees
+> read from there — copying them per-worktree is no longer necessary.
 
 ### Copy data/regression/<date> folders
 
@@ -118,17 +122,7 @@ if [ -d "data/regression" ]; then
 fi
 ```
 
-### Copy data/*.parquet files
-
-```bash
-parquet_files=$(ls data/*.parquet 2>/dev/null)
-if [ -n "$parquet_files" ]; then
-  cp data/*.parquet "../<tag>/data/"
-  echo "Copied data/*.parquet files"
-fi
-```
-
-If neither directory nor files exist, skip silently — the worktree will fetch or
+If the directory does not exist, skip silently — the worktree will fetch or
 generate data as needed.
 
 ---
@@ -203,7 +197,7 @@ Tell the user the worktree is ready:
 Worktree:  ../<tag>
 Branch:    autoresearch/<tag>
 Strategy:  <name> (from strategies/)  OR  current train.py
-Data:      regression dates + *.parquet copied  OR  none found
+Data:      regression dates copied (parquets via global path)  OR  none found
 ─────────────────────────────────────────────────────
 ```
 
