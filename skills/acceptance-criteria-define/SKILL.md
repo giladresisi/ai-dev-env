@@ -95,7 +95,25 @@ Output your derived criteria in a clear, readable list. Use this format:
 - <item> — not required for this task
 ```
 
-Then use **AskUserQuestion** to ask the user:
+### Auto-approval gate (non-interactive / indirect invocation)
+
+Before asking the user anything, decide whether a user is actually present to confirm. The
+AskUserQuestion below only makes sense when this skill was invoked **directly by the user**. When
+it was invoked **indirectly** — by another skill, agent, or orchestrator running an automated flow
+(e.g. `plan-feature` inside an automated planning/experiment harness, or a planning subagent) —
+there is no one waiting to answer, and a blocking question would stall the whole flow.
+
+Treat the invocation as **non-interactive** if ANY of these hold:
+- the caller passed an auto-approve signal in context — e.g. `auto_approve: true`,
+  `[non-interactive]`, or "auto-approve acceptance criteria"; or
+- the context states this skill (or the skill that invoked it) was invoked indirectly / by another
+  skill or agent rather than directly by the user.
+
+**If non-interactive:** skip the AskUserQuestion below entirely and proceed with the **proposed
+criteria as-is** (identical to option 1). Output one line noting it — "Acceptance criteria
+auto-approved (non-interactive invocation)." — then continue to Step 4.
+
+**If interactive (a user invoked this directly):** use **AskUserQuestion** to ask the user:
 
 Question: "Do these acceptance criteria look right, or would you like to define them yourself?"
 Options:

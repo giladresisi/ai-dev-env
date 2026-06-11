@@ -188,14 +188,22 @@ Output to CLI after saving the plan. **Do NOT include plan content in this messa
 
 ## Phase 7: Define Acceptance Criteria
 
-After the Final Report has been output above (giving the user a chance to see the plan), invoke the `acceptance-criteria-define` skill if it is available in this system:
+After the Final Report has been output above (giving the user a chance to see the plan), invoke the `acceptance-criteria-define` skill if it is available in this system.
+
+**First, determine how plan-feature itself was invoked**, because that decides whether the criteria need user confirmation:
+- **Directly by the user** (the user typed `/plan-feature` or asked you to plan a feature): interactive — let `acceptance-criteria-define` confirm the criteria with the user as normal.
+- **Indirectly** (this skill was invoked by another skill, agent, or orchestrator — e.g. an automated planning/experiment harness or a planning subagent — rather than by the user): non-interactive — no user is present, so the proposed criteria must be **auto-approved** instead of blocking on a question.
+
+Invoke with the plan path as context, and **when plan-feature was invoked indirectly, also pass the auto-approve signal** so `acceptance-criteria-define` accepts the proposed criteria without a blocking prompt:
 
 ```
 skill: "acceptance-criteria-define"
 context: "<absolute path to the plan file just created>"
+         # if plan-feature was invoked indirectly, append:
+         "auto_approve: true  ([non-interactive] — plan-feature was invoked indirectly, not by the user)"
 ```
 
-Pass the plan file path as the context. The skill will read the plan, derive proposed acceptance criteria, confirm them with the user, and write the agreed criteria into the plan file.
+The skill will read the plan, derive proposed acceptance criteria, **confirm them with the user when interactive or auto-approve them when the non-interactive signal is passed**, and write the agreed criteria into the plan file.
 
 **If the `acceptance-criteria-define` skill is not available:** skip this phase and proceed directly to STOP below.
 
